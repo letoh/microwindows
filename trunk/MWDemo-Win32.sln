@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MWDemo-Win32", "MWDemo-Win32.vcproj", "{1A1D760D-4027-4907-9C90-FB06094DD8CC}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MWHello-Win32", "MWHello-Win32.vcproj", "{8615DF87-3D87-41BE-8E34-D335E3D14412}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{1A1D760D-4027-4907-9C90-FB06094DD8CC}.Debug.ActiveCfg = Debug|Win32
+		{1A1D760D-4027-4907-9C90-FB06094DD8CC}.Debug.Build.0 = Debug|Win32
+		{1A1D760D-4027-4907-9C90-FB06094DD8CC}.Release.ActiveCfg = Release|Win32
+		{1A1D760D-4027-4907-9C90-FB06094DD8CC}.Release.Build.0 = Release|Win32
+		{8615DF87-3D87-41BE-8E34-D335E3D14412}.Debug.ActiveCfg = Debug|Win32
+		{8615DF87-3D87-41BE-8E34-D335E3D14412}.Debug.Build.0 = Debug|Win32
+		{8615DF87-3D87-41BE-8E34-D335E3D14412}.Release.ActiveCfg = Release|Win32
+		{8615DF87-3D87-41BE-8E34-D335E3D14412}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

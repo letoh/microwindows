@@ -1,0 +1,1820 @@
+┌──────────────────────┐
+│                                            ├┐
+│Micro Windows/Lite for MS-DOS and MS-Windows││
+│                                            ││
+│  Programmer's Guide to Write Applications  ││
+│                                            ││
+│《世紀末軟體革命：C++ 、GUI 與物件導向理論》││
+│  範例程式 Micro Windows/Lite 程式寫作指引  ││
+│                                            ││
+│                                 by Deng Liu││
+└┬─────────────────────┘│
+  └──────────────────────┘
+
+
+前言
+====
+
+這份文件是 Micro Windows/Lite (以下簡稱 MWL) 的應用程式發展說明。
+在這份說明中，您將會看到：
+
+    (1) 在 Micro Windows/Lite 下寫應用程式，至少需要寫那些東西。
+    (2) Micro Windows 各部份詳細說明。
+    (3) 如何繼承新的視窗或控制元件 class。
+    (4) DEMO.CPP 和一些現成可用模組的介紹。
+    (5) Micro Windows/Lite 如何從 MS-DOS 移植到 MS-Windows 上。
+
+以下便分這五部份說明。
+
+第一部份  Micro Windows/Lite 應用程式的寫作
+===========================================
+
+Micro Windows/Lite 是以 C++ 寫成，而以 MVC 架構製作。對於 MVC
+架構，在我們書中第 13 章有著詳細的說明。在這裡，我們將討論最
+實際的程式寫作：
+
+
+(a) 該使用／繼承那些 class ？
+=============================
+
+現在我們來看看應用程式 (以下稱 AP) 寫作。我們以 MVC 的觀點，
+來看看寫一個 "Hello, world!" 的程式該包含那些部份：
+
+    (1) 應用程式 -- 即 Model
+    (2) 顯示 "Hello, world!" 的視窗 -- 即一個 Window class
+        的 instance 。
+    (3) 開一個 button -- 這個 button 是歸我們的應用程式所管。
+
+如此，我們手上就得有三個物件。其中，視窗可以由 Window class
+產生，button 可由 Button class 產生。應用程式呢？
+
+在 Micro Windows/Lite 的 class 層級組織 (詳見 HIERARCH.TXT)
+中，所有你自定的 model 都得繼承 Model class ，以便繼承 Model
+class 中和 View 溝通的部份。
+
+在知道我們要使用或繼承那些 class 後，暫且先轉移話題，來看看
+實際程式寫作的準備工作。
+
+
+(b) 該使用那些標頭檔？
+=======================
+
+在每個 Micro Windows/Lite 的應用程式中，你都至少得含入一個標
+準的標頭檔 -- GUI.H ，這個標頭檔提供所有 Micro Windows/Lite
+所需要的起始設定 (initialization) 、公用物件 (global objects)
+等。
+
+除了 GUI.H 外，你得將你想用的 class 所在的標頭檔含入，例如說，
+你想使用 Window class、繼承 Model class、使用 Button class，
+那麼你得含入這三個檔：
+
+     #include "model.h"
+     #include "window.h"
+     #include "button.h"
+
+至於那個 class 位於那個含入檔，我們將在第二部份中看到。
+
+
+(c) 繼承 Model class
+====================
+
+在確定我們要含入那些檔案後，接下來最重要的便是要繼承 Model
+class 了！在此我們把 Model class 的內容列出來，供你參考：
+
+    // 節錄自 MODEL.H
+    class Model : public Object
+    {
+    public:
+        // 以下三個成員函數皆為滑鼠控制之用
+        virtual void leftButtonUp (View *from, Point *pnt);
+        virtual void leftButtonDown (View *from, Point *pnt);
+        virtual void mouseMove (View *from, Point *pnt);
+
+        // View 和 Model 之間的通訊函數
+        virtual void fromView (View *from);
+
+        // Controller 和 Model 之間的通訊函數
+		virtual void fromController (View *from, Controller *ctrl);
+
+        // 是否允許 View 關閉的函數
+        virtual BOOL close (View *from);
+
+        // 其它在 model.h 所列的函數, 如 asciiKeyin(),
+        // 為鍵盤控制用, 在 Micro Windows/Lite 中並無提供
+    };
+
+Model class 所列出的這幾個少數的成員函數，就是你唯一要繼承的
+東西，剩下的就是你的創意了！
+
+
+(d) 實際寫作你的 class
+======================
+
+我們用一個 HelloApp class 來說明繼承 Model class 要做那些事：
+
+HelloApp 是一個 Model ，而它要開一個視窗，也要建立一個 button，
+因此你得在 HelloApp class 內擺下這兩個物件的指標，供以後參考
+用：
+
+    class HelloApp : public Model       // 別忘了繼承 Model
+    {
+        ...
+    protected:
+        Window  *myWindow;              // 視窗的指標
+        Button  *myButton;              // button 的指標
+    };
+
+接下來，我們要在 HelloApp 的 constructor 中，真正地建立這兩
+個物件。一般來說，View class 和其 derived class 都有以下幾
+個參數：
+
+        View::View (Rect *prect,        // View 所占的矩形,
+                    View *parent,       // View 的親代,
+                    BOOL autoAttach,    // 是否要自動附在 parent 上?
+                    BOOL killModel)     // View 結束時是否要順便除掉 model?
+
+首先 prect 是 View 所占的矩形，parent 是它的親代。若你的視窗
+是開在桌面上，請將 parent 設成 desktop (desktop 是公用物件)。
+autoAttach 內定值是 TRUE ，表示它會自動加在它的親代上（若設成
+FALSE，視窗就不會附在 parent 上，更不會自動顯示出來）。
+
+至於 killModel 得說明一下。View 的消滅是由它的 parent 決定的。
+當一個 View 將要被除構時，它會先問它的 Model (呼叫 Model::close() )
+是否允許關閉。如果 Model 允許 (Model::close 內定回傳值為 TRUE) ，
+則 View 便會作適當的處理以便結束。如果 killModel 參數設成 TRUE，
+View 會連其 Model 一起殺掉。killModel 內定值為 FALSE
+
+就拿 "Hello, world!" 這個範例來說，當你按下視窗的結束鈕時，這
+視窗就會結束。由於這個視窗是 HelloApp 唯一控制的視窗，因此它
+可以順便將這個 model 殺掉。
+
+我們現在可以在 HelloApp 的 constructor 中建立這兩個物件了：
+
+    HelloApp::HelloApp ()
+    {
+        myWindow = new Window ("Hello Window",  // 第一個參數為視窗的標題,
+                               &Rect (100, 100, 500, 400),
+                               desktop,
+                               TRUE,
+                               TRUE);  // myWindow 結束時要把 model 殺掉
+
+        // myButton 是附在 myWindow 裡，因此 myButton 的參考座標
+        // 是在 myWindow 裡。
+        myButton = new Button ("OK",    // 第一參數為 button 內要顯示的字
+                               &Rect (180, 360, 220, 380),  // 注意座標
+                               myWindow);       // myWindow 是 parent,
+        // 既然 autoAttach = TRUE, killModel = FALSE, 就不需要另設
+    }
+
+這樣就完成開啟視窗的工作。驚訝嗎？
+
+另外提醒一件事：你不需要在 HelloApp class 的解構成員函數中
+去 delete myWindow 或 myButton 這兩個物件。也就是說：
+
+    delete myWindow;
+    delete myButton;
+
+是不需要的。它們都由 Micro Windows/Lite 的 MVC 架構自動管理。
+
+
+(e) 接收來自 View 的訊息
+========================
+
+接下來，我們得接收 button 送出來的訊息。因為 "OK" button 一旦
+被按下，這程式就要跟著結束。
+
+要接收來自 button 的訊息，也是簡單得不能再簡單，只要繼承
+fromView 函數就可以了，比如說：
+
+    class HelloApp : public Model
+    {
+    public:
+        HelloApp ();
+        virtual void fromView (View *from);
+        ...
+    };
+
+fromView 函數中的參數 from 代表這個訊息的發送者。當 button
+被按下時，它會送這個訊息給 model。因此，你只要判斷 from 是否
+為 myButton ，就知道是否該結束了：
+
+    void HelloApp::fromView (View *from)
+    {
+        if (from == myButton)   // 如果是 myButton 送來的
+        {
+            myWindow->close();  // 叫 myWindow 結束營業
+        }
+        // ...  沒有了, what else?
+    }
+
+當你呼叫 myWindow->close() 時，它會連它下面的 subview (在本例
+中為 myButton) 一起清除掉。
+
+小練習：把 myWindow 換成 myButton ，結果會怎麼樣？
+
+
+(f) 顯示 "Hello!" 字樣
+======================
+
+讓我們再增加一個功能：當滑鼠在視窗內按下滑鼠的按鈕時，在按下
+的地方顯示一個 "Hello" 字串。
+
+作這個功能，你可以繼承 leftButtonUp() 這個函數，當滑鼠在視窗
+內被按下而放開時，HelloApp 就會收到這個訊息：
+
+    class HelloApp : public Model
+    {
+    public:
+        ...
+        virtual void leftButtonUp (View *from, Point *pnt);
+        ...
+    };
+
+其中 from 參數代表「滑鼠游標所在的 view」，而 pnt 表示滑鼠
+按鈕放開的位置。在我們的例子中，Button class 是不會送這個
+訊息的（那是因為 Button class 屬於 Control class -- 控制元件
+會自己處理掉。第二部份將對這些特性詳加說明）
+
+    void HelloApp::leftButtonUp (View *from, Point *pnt)
+    {
+        // 在此我們得用到繪圖功能了, 首先我們得先取得
+        // 這個 View 的繪圖埠。
+        Port *p = from->getClientPort ();
+
+        // 然後我們要用 Text class 來寫上這串字, 在 pnt 的位置上:
+        Text helloText ("Hello!", pnt);
+
+        // 設定筆的顏色和字的背景色
+        p->setPenColor (PPC_White);     // 白色
+        p->setBgColor (PPC_Gray);       // 背景為灰色
+
+        // 把文字畫上去，很物件化吧：
+        p->draw (&HelloText);
+    }  // 沒了, what else?
+
+當然，如果你願意，你可以試試看以下程式：
+
+    void HelloApp::mouseMove (View *from, Point *pnt)
+    {
+        Port *p = from->getClientPort ();
+        Rectangle r(pnt->x, pnt->y, pnt->x + 10, pnt->y + 10);
+        p->setPenColor (PPC_Red);
+        p->draw (&r);
+    }
+
+
+(g) 寫作 main()
+===============
+
+最後要寫的便是主程式了！在 Micro Windows/Lite 中，你的主程式
+只需包括三部份：
+
+    (a) 產生一 Driver class 的 instance
+    (b) 建立你的 model -- 例如 HelloApp
+    (c) 呼叫 Driver::run
+
+因此我們的 "Hello, world!" 程式的 main() 只有短短三行：
+
+int main ()     // main 的型別為 int
+{
+    Driver gui;
+    new HelloApp;       // 注意這裡得用 new, 因為這個 instance
+                        // 得由它的 myWindow 除構
+    return (gui.run()); // Driver::run 的回傳值可作為系統回傳值
+}
+
+好像簡單得過份。 :)
+
+
+(h) 與 MWLIB.LIB 連結，產製 HELLO.EXE
+=====================================
+
+最後一件事，就是把你的 HELLO.CPP 和 MWLIB.LIB 連結成 HELLO.EXE
+了。
+
+在 Micro Windows/Lite 中，你的程式必須設在「大型模式」 (LARGE MODEL)，
+使用 Borland C++ 編譯器連結，才能正常地產出 HELLO.EXE。你可以
+用 BC++ IDE 的 "Project" 功能，或是直接在 MS-DOS 命令列下直接
+下指令：
+
+    bcc -ml hello.cpp mwlib.lib
+
+要注意的是，如果 BC++ 標頭擋的含入檔放在 C:\BC\INCLUDE ，而你
+的 Micro Windows/Lite 的標頭檔放在 D:\OOP\MWINDOWS\INCLUDE ，
+你還得加上以下幾個字：
+
+    bcc -Ic:\bc\include;d:\oop\mwindows\include -ml hello.cpp mwlib.lib
+
+這樣通常還是不能編出 .EXE 檔，得再加上程式庫 (.LIB) 的所在位
+置。再寫下去，這命令列就未免太長了，不如寫個叫 TURBOC.CFG
+的檔案，將這些參數放進去：
+
+    -Ic:\bc\include;d:\oop\mwindows\lib
+    -Lc:\bc\lib;d:\oop\mwindows
+    -ms
+    ... 還可以再寫其它參數
+
+TURBOC.CFG 必須和你的 BCC.EXE 放在一起。當設好這個檔案，以後
+你只需打：
+
+    bcc hello.cpp mwlib.lib
+
+便大功告成。
+
+Ok，恭喜你踏入 Micro Windows/Lite 的世界。Hello, world! :)
+
+
+(i) Model 和 View 的關係
+========================
+
+Model 和 View 之間的通訊完全靠 Model class 所提供的幾個成員函
+數完成；一個 Model 可以開啟很多 View ，例如 Hello.CPP 中，我們
+的 HelloApp 開啟了兩個 View: 一個視窗和一個 button 。這兩個
+view 都送訊息給 Model ，而 Model 也就得憑藉著它們來處理事情。
+
+在 Micro Windows/Lite 中，一旦你的 Model 建立了一個 View ，且
+將它的 clientModel 參數設成自己，這時這個 View 就會向 Model
+負責，將訊息送給 Model 。
+
+最後要注意的是，在 Model 中，你隨時可以呼叫 View::close 將這
+個 view 關掉，也可以呼叫 View::draw() 強迫整個 View 重畫。
+
+
+(j) 控制元件 (Control)
+======================
+
+控制元件和一般的 View 並無不同，但它自己處理滑鼠訊息，而不交
+由 Model 處理。當你的 Model 開啟一個控制元件後，它只能從
+fromView() 這個函數接收來自控制元件的消息。
+
+在 Micro Windows/Lite 中只提供了 Button 一種控制元件。不過你
+可以藉由第三部份的「衍生新的 class」的指引，建立屬於自己的控
+制元件。
+
+(k) 申請使用控制器 (Controller)
+===============================
+
+在 Micro Windows/Lite 中，你可以申請的控制器有 Timer 和 Idler
+兩種。Timer 是系統時鐘，它們每隔一段你指定的時間就發訊息給你，
+Idler 則是在系統閒閒沒事時發訊息。
+
+Controller 必須由 Model 申請，以 Timer class 為例：
+
+    timer->apply (myWindow, 1000);
+
+apply 是申請函數，myWindow 表示這個 Controller 訊息要送給那個
+View ，1000 是時間值，單位是千分之一秒。若你設成 500 ，則表示
+每半秒（千分之五百）送一次訊息。
+
+這個訊息會由 View 收到，轉送到 Model 的 fromController 函數。
+fromController 函數有一個 ctrl 參數，你可由這個參數判斷訊息由
+那個 controller 送出。
+
+Idler 的用法更簡單，例如：
+
+    idler->apply (myWindow);
+
+這樣保證你可以在系統閒著沒事時，收到一大票的訊息。
+
+請注意！當你的 Model 結束時，請務必使用 remove 函數，將這些
+對 Controller 的申請解除，否則當 Controller 送一個訊息給已經
+不存在的 View 時，得到的結果將不可預期：
+
+    MyModel::~MyModel ()
+    {
+        timer->remove (myTimerWindow);
+        idler->remove (myWindow);
+        ....
+    }
+
+
+(l) 繪圖功能
+============
+
+繪圖功能是由 Port class 和 Shape class 所完成的。
+
+在繪圖之前，你得先取得一個 Port 的 instance 。最簡單的方法，
+當然是從你開啟的視窗中要一個！使用 View::getClientPort() 可
+以作到這件事，例如：
+
+    void MyModel::drawMyPicture ()
+    {
+        Port *myPort;
+
+        myPort = myWindow->getClientPort();  // 取得 port
+    }
+
+取得 Port 後，你可能還想設一些參數在裡面：
+
+    setPenColor ()  設定 Port 繪筆的顏色，你可以使用的有
+                    PPC_Black (黑)、PPC_White (白)、PPC_Gray
+                    (灰)、PPC_DarkGray (深灰)、PPC_Red (紅)、
+                    PPC_Blue (藍)、PPC_Green (綠)、PPC_Yellow
+                    (黃)、PPC_Cyan (青)、PPC_DarkBlue (暗藍)、
+                    PPC_DarkGreen (暗綠)、PPC_DarkCyan (暗青)、
+                    PPC_DarkRed (暗紅)、PPC_DarkPurple (暗紫)、
+                    PPC_Brown (棕色)、PPC_Purple (紫色) 等。
+
+    setBgColor ()   設定 Port 繪筆的背景色，此參數只在繪製
+                    Text class 時有用。
+
+    setPenMode ()   設定繪筆的模式，有 PPM_Normal (正常)  和
+                    PPC_XOR (互斥 "或" ) 兩種模式。
+
+    getPenColor ()  取得目前繪筆的顏色。
+    getBgColor ()   取得目前繪筆的背景色。
+    getPenMode ()   取得目前繪筆的模式。
+
+設定完幾個參數後，你就可以用 Port 的 draw 函數，繪製圖形物件
+了。Micro Windows/Lite 所提供的系統圖形物件有以下幾種：
+
+    Line class                  -- 表一條線段
+    Rectangle class             -- 表一矩形
+    FilledRectangle class       -- 表一充填之矩形
+    Text class                  -- 表一段文字
+    StereoBorder class          -- 表立體框線
+
+這些物件的建立法，你可以參閱 SHAPE.H 。現在我們就舉一個例子，
+來說明如何繪製一個簡單的圖形：
+
+    Port *myPort = myWindow->getClientPort();
+    Rect refRect (10, 10, 100, 100);  // 設定參考矩形
+
+    Rectangle a (&refRect);           // 建立矩形 a
+    Text b ("Hello!", &refRect);      // 在參考矩形中央建立文字
+    StereoBorder c (refRect->x1 - 5, refRect->y1 -5,
+                    refRect->x2 + 5, refRect->y2 +5,
+                    Concave, 2);      // 在矩形 a 的外圍建立一
+                                      // 立體框。
+
+    myPort->setPenColor (PPC_White);  // 畫筆設為白色
+    myPort->draw (&a);                // 畫出 a
+    myPort->setPenColor (PPC_Blue);   // 畫筆設為藍色
+    myPort->setBgColor (PPC_Black);   // 畫筆背景設為黑色
+    myPort->draw (&b);                // 畫出 b
+    myPort->draw (&c);                // 畫出 c (立體框不受顏色
+                                      // 限制, 它有它自己的顏色)
+
+
+以上這些就是在利用 Micro Windows/Lite 設計程式時，你所需要的
+工具了。
+
+
+第二部份  Micro Windows/Lite class 層級組織參考手冊
+====================================================
+
+以下是 Micro Windows/Lite 完整的 class 層級組織說明，說明內容
+可作為你閱讀 Micro Windows/Lite 程式碼的導讀。
+
+每個 class 的說明範例如下：
+
+    XXX class
+    =========
+
+        class name (class 名稱): XXX
+        inherited from (繼承自): YYY
+        inherited by (被誰繼承): ZZZ
+        description (功能說明):
+            ....
+        constructors (建立物件的方法):
+            ....
+        methods (簡要成員函數說明):
+            ....
+        miscellaneous note (其他備註):
+            ....
+
+
+class 層級組織圖則繪於 HIERARCH.TXT 中。
+
+以下說明，我們以大寫開頭的英文單字為 class 名稱，小寫為技術名
+詞或 instance 名稱。若該 class 名稱又恰巧為某個技術名詞（例如
+View class 和 MVC 中的 "view"），則大小寫混用可能指的是 View
+這個概念、View class、或 View class 的 instance ，簡單的說就是
+「View 物件」，請讀者自行辨明。
+
+
+Object class (OBJECT.H)
+=======================
+
+    class name      : Object
+    inherited from  : none
+    inherited by    : Driver, Model, View, GObject, Shape,
+                      Collection, Controller, Message
+    description     : 提供所有其他 class 一個共同的 base class
+    constructors    : none
+    methods         :
+        virtual ~Object ();
+            提供所有 derived class 一個共同的 virtual destructor
+    misc. note      : none
+
+
+GObject class (GOBJECT.H)
+=========================
+
+    class name      : GObject
+    inherited from  : Object
+    inherited by    : Rect, Point, RectArray
+    description     : 提供描述圖形的物件（圖元）一個共同的
+                      base class
+    constructors    : none
+    methods:        : none
+    misc. note      : none
+
+Point class (GOBJECT.H)
+=======================
+
+    class name      : Point
+    inherited from  : GObject
+    inherited by    : none
+    description     : 描述平面「點」座標的 class
+    constructors    :
+        Point (int px=0, int py=0);
+            建立一個點物件。
+    methods         :
+        void move (int px, int py);
+        void move (Point *offset);
+            將點移動某個位置。意義同於：
+                x += px;
+                y += py;
+
+        void set (int px, int py);
+            設定點座標。
+
+    misc. note      : none
+
+Rect class (GOBJECT.H)
+======================
+
+    class name      : Rect
+    inherited from  : GObject
+    inherited by    : none
+    description     : 描述矩形的 class
+    constructors    :
+        Rect (int px1=0, int py1=0, int px2=0, int py2=0);
+            使用四個參數: x1, y1, x2, y2 建立矩形。
+
+        Rect (Point *orig, Point *corn);
+            使用兩個點建立矩形。
+
+    methods         :
+        void set (int px1, int py1, int px2, int py2);
+        void set (Point *orig, Point *corn);
+            重新設定矩形資料。
+
+        void move (int ox, int oy);
+        void move (Point *offset);
+            將矩形移至某個位置。
+
+        void resize (int width, int height);
+        void resize (Rect *reference);
+            將矩形的尺寸改變為 width/height 所設之寬度/高度。
+            或參數為 Rect *reference ，則以 reference 矩形的
+            寬度/高度為準。
+
+        int  width();
+        int  height();
+            傳為矩形的寬/高度。
+
+        BOOL inside(int px, int py);
+        BOOL inside(Point *p);
+            判斷一個點是否落於矩形內。
+
+        BOOL intersection (Rect *toDeal, Rect *result);
+            計算兩個矩形間的交集（互相重疊的部份），結果放在
+            result 裡。傳回 TRUE 表有交集，傳回 FALSE 表沒有。
+
+    misc. note      : 這是用來「描述」資料用的物件，請別和等
+                      會出現的 Rectangle class 搞混。又，在
+                      Rect class 中，所有的資料均為「正規化」
+                      過的，亦即 x1 恆小於等於 x2 ，y1 恆小於
+                      等於 y2。
+
+
+RectArray class (FREEAREA.H)
+============================
+
+    class name      : RectArray
+    inherited from  : GObject
+    inherited by    : FreeArea
+    description     : 供 FreeArea 使用的矩形陣列
+    constructors    : n/a (表不供使用)
+    methods         : n/a
+    misc. note      : 這個模組並不提供給使用者，僅供 FreeArea
+                      儲存 Rect 物件時使用。
+
+FreeArea class (FREEAREA.H)
+===========================
+
+    class name      : FreeArea
+    inherited from  : RectArray
+    inherited by    : none
+    description     : 「不規則自由區域」 (region/free area)
+                      的描述物件。
+    constructors    : none
+    methods         :
+        BOOL    intersection (Rect *prect, FreeArea *result);
+            求此區域和一矩形 (prect) 所成之交集，結果放於 result
+            內。若傳回 TRUE 表有交集，反之則否。
+
+        BOOL    intersection (FreeArea *parea, FreeArea *result);
+            求此區域和另一區域之交集，餘和前同。
+
+    void    add (Rect *prect);
+    void    add (FreeArea *parea);
+            併入一塊矩形／區域。
+
+    void    cut (Rect *prect);
+    void    cut (FreeArea *parea);
+            裁掉一塊矩形／區域。
+
+    void    copy (FreeArea *parea);
+            拷貝另一塊區域的內容。
+
+    misc. note      : none
+
+
+Port class (PORT.H)
+===================
+
+    class name      : Port
+    inherited from  : GObject
+    inherited by    : ViewPort
+    description     : 供繪圖使用的圖形 port。
+    constructors    :
+        Port (Rect *prect, Port *pparent = NULL);
+            建立一 port ，區域為 prect ，親代為 pparent ，若設
+            為 NULL 表無親代。
+
+    methods         :
+        void move (int xo, int yo);
+            將 port 的參考座標搬移至某一位置
+
+        void resize (int width, int height);
+            將 port 的區域大小作改變
+
+        void show (Rect *toshow=NULL);
+            令 port 得顯示於 toshow 所指定的區域，若設為 NULL
+            表整塊 port 皆為可見。
+
+        void hide (Rect *tohide=NULL);
+            令 port 遮蓋住 tohide 所指定的區域，若設為 NULL
+            表整塊 port 皆不可見。
+
+        void getPortRect (Rect *receiver);
+            傳回 port 所占據的矩形。請將 receiver 傳給它，它
+            會將這塊矩形拷貝給 receiver 。
+
+        void draw (Shape *todraw);
+            繪製圖形物件。
+
+        BOOL fullVisible ();
+            詢問這塊 port 是否全為可見。傳為 TRUE 表全為可建，
+            FALSE 則表有部份區域遭遮住。
+
+    misc. note      : 其餘函數已於前一部份介紹過。
+
+
+ViewPort class (VIEWPORT.H)
+===========================
+
+    class name      : ViewPort
+    inherited from  : Port
+    inherited by    : none
+    description     : 供 View 使用的 Port 。
+    constructors    : n/a
+    methods         : n/a
+    misc. note      : 本模組不提供給使用者。
+
+
+Shape class (SHAPE.H)
+=====================
+
+    class name      : Shape
+    inherited from  : Object
+    inherited by    : Rectangle, FilledRectangle, Line, Text,
+                      StereoBorder
+    description     : 抽像的圖形物件描述。
+    constructors    : none
+    methods         :
+        virtual void    draw (Port *port)=0;
+            繪製這個圖形物件。
+
+        virtual BOOL    inside (Point *p);
+            判斷點是否落於此物件內。
+
+        virtual void    setOrig (Point *pnt);
+            設定起始點。
+
+        virtual void    setDest (Point *pnt);
+            設定終點。
+
+        virtual void    setBoundary (Rect *boundary);
+            設定圖形的邊界框。
+
+    misc. note      : 以下繼承自 Shape class 的 class 除
+                      draw() 有修改外餘皆同。
+
+
+Rectangle class (SHAPE.H)
+=========================
+
+    class name      : Rectangle
+    inherited from  : Shape
+    inherited by    : none
+    description     : 矩形圖形
+    constructors    :
+        Rectangle (Point *porig, Point *pdest);
+        Rectangle (int x1, int y1, int x2, int y2);
+        Rectangle (Rect *r);
+
+    methods         : 同前
+    misc. note      : none
+
+
+FilledRectangle class (SHAPE.H)
+===============================
+
+    class name      : FilledRectangle
+    inherited from  : Shape
+    inherited by    : none
+    description     : 填滿的矩形圖形
+    constructors    :
+        FilledRectangle (Point *porig, Point *pdest);
+        FilledRectangle (int x1, int y1, int x2, int y2);
+        FilledRectangle (Rect *r);
+
+    methods         : 同前
+    misc. note      : none
+
+
+Line class (SHAPE.H)
+====================
+
+    class name      : Line
+    inherited from  : Shape
+    inherited by    : none
+    description     : 一條線段
+    constructors    :
+        Line (Point *porig, Point *pdest);
+        Line (int x1, int y1, int x2, int y2);
+
+    methods         : 同前
+    misc. note      : none
+
+
+Text class (SHAPE.H)
+====================
+
+    class name      : Text
+    inherited from  : Shape
+    inherited by    : none
+    description     : 文字
+    constructors    :
+        Text (char *pstring, Point *porig, Point *pdest = NULL);
+            建立一文字物件。若 pdest 不是 NULL ，則 Text 將繪
+            於 porig 到 pdest 所建立起的一個「邊界盒」中（見以
+            下 boundbox 敘述）
+
+        Text (char *pstring, Rect *boundbox);
+            建立一文字物件，並以 boundbox 作為「邊界」，將文字
+            畫在這個邊界正中央。
+
+        Text (Text &ptext);
+            直接拷貝自另一文字。
+
+    methods         : 同前
+    misc. note      : none
+
+
+StereoBorder class (SHAPE.H)
+============================
+
+    class name      : StereoBorder
+    inherited from  : Shape
+    inherited by    : none
+    description     : 立體框線
+    constructors    :
+        StereoBorder (Point *porig, Point *pdest, StereoType t = Convex,
+                      int pdepth = 2);
+        StereoBorder (int x1, int y1, int x2, int y2, StereoType t = Convex,
+                      int pdepth = 2);
+        StereoBorder (Rect *r, StereoType t = Convex, int pdepth = 2);
+            建立一立體框，其中參數 t 為種類 (Convex 表凸出，Concave
+            表凹入) ，pdepth 為深度。
+
+    methods         : 同前
+    misc. note      : none
+
+
+View class (VIEW.H)
+===================
+
+    class name      : View
+    inherited from  : Object
+    inherited by    : MultView, Control
+	description 	: MWL 中的基礎 class ，詳細的功能分析已於本
+					  書的第十四章有詳細說明。
+    constructors    :
+		View (Rect *prect, View *pparent, Model *client,
+			  BOOL attach = FALSE, BOOL killModel = FALSE);
+
+			建立一個 view ，其中 prect 為 view 的顯示區域，
+			pparent 為其親代，client 為其「委託者」（在本書
+			第十三章有解說它的意義），attach 若為 TRUE ，表
+			示此 View 應自動附於親代之上，反之則否。killModel
+			若設為 TRUE ，則在 view 結束之時，順便將其
+			clientModel 一併除構。
+
+	methods 		:
+		virtual void	messageDispatcher (Message *msg);
+		virtual void	dispatchMouse (Message *msg);
+			以上為處理訊息的函數，messageDispatcher 為公用的
+			訊息遞送演算法。dispatchMouse 則專處理滑鼠訊息
+
+
+		virtual Rect   *getViewRect (Rect *receiver);
+		virtual Rect   *getClientRect (Rect *receiver);
+		virtual Port   *getClientPort ();
+		virtual Port   *getViewPort ();
+		virtual Port   *getAttachPort ();
+			以上函數用以查詢 view 的資料。
+
+		virtual void	minimize ();
+		virtual void	maximize ();
+		virtual BOOL	close (BOOL immediate = FALSE);
+		virtual void	draw (FreeArea *area);
+		virtual void	draw (Rect *area = NULL);
+		virtual void	move (Point *offset, View *pparent = NULL);
+		virtual void	resize (int width, int height, View *pparent = NULL);
+			以上函數處理 view 的重畫、移動、改變尺寸、關閉等，
+			可以供 view 和 view 之間或 view 和 model 之間呼叫
+
+
+		virtual void	hide (View *pparent, Rect *area = NULL);
+		virtual void	show (View *pparent, Rect *area = NULL);
+		virtual void	activate ();
+		virtual void	deactivate ();
+			以上函數僅供 view 的親代使用，是用來告知 view 有
+			某一塊需要遮住、需要顯露等。
+
+		virtual void	attachSubview (View *subview);
+		virtual void	removeSubview (View *subview);
+			attachSubview 讓 subview 附著於 parent 上，
+			removeSubview 則將 subview 挖下來。
+
+		virtual void	moveSubview (View *subview, Point *offset);
+		virtual void	resizeSubview (View *subview, int width, int height);
+		virtual void	moveResizeSubview (View *subview, Point *offset,
+										   int width, int height);
+		virtual void	beginMove (View *subview);
+		virtual void	beginResize (View *subview, ResizePlace rp);
+		virtual void	bringTop (View *subview);
+			以上諸函數於 View class 中無意義，需待 MultiView class
+			重新定義。
+
+		virtual Point  *getRandomAttachPoint (Point *receiver);
+		virtual Rect   *getRandomAttachRect (Rect *receiver);
+			以上兩函數可取得一「任意附著點」或「隨機視窗區塊」。
+			對於無法決定該放在那裡的視窗來說，不妨呼叫這兩個
+			函數以取得一安身之地。
+
+		virtual void	selfDraw (Port *port, Rect *area);
+			保護級別為 protected。主供 view 繪製自己使用。
+
+		virtual void	selfMouse (Message *msg);
+			保護級別為 protected。主供 view 傳送滑鼠訊息使用。
+
+		virtual void	clientDraw (Rect *area);
+			保護級別為 protected。主供 view 在送重繪訊息給 model
+			前作前置處理（座標轉換等）用。
+
+	misc. note		: none
+
+
+Message class (MESSAGE.H)
+=========================
+
+    class name      : Message
+    inherited from  : Object
+    inherited by    : none
+	description 	: 攜帶 MVC 訊息的物件
+    constructors    :
+		Message (View *s = NULL, View *r = NULL, Controller *c = NULL,
+                 MsgType t = 0, Point *p = NULL, Rect *a = NULL,
+                 MsgData e = 0)
+
+			建立一個訊息物件： s 為訊息發信人
+							   r 為訊息接收者
+			  (NULL 表沒有)    c 為發出訊息的控制器
+							   t 為種類（由 s 或 c 定義）
+							   p 為座標點
+							   a 為區域
+							   e 為額外的資料，為一 32-bit WORD
+
+	methods 		: none.
+	misc. note		: none.
+
+
+MessageQueue class (MESSAGE.H)
+==============================
+
+    class name      : MessageQueue
+    inherited from  : Object
+    inherited by    : none
+	description 	: 系統訊息佇列
+	constructors	: none
+    methods         :
+		BOOL	put (Message *msg);
+			放入一個訊息（此時佇列會儲存它的複本而非它的指標）
+
+		BOOL	put (View *s = NULL, View *r = NULL, Controller *c = NULL,
+					 MsgType t = 0, Point *p = NULL, Rect *a = NULL,
+					 MsgData e = 0);
+			放入一個訊息，作用和 Message class 的建構元相同。
+
+		Message *get ();
+			取得一個訊息（此時這個訊息是已經「取出」來，不再存
+			於佇列中）
+
+		BOOL	isEmpty ();
+			詢問佇列是否空空如也。TRUE 表真的沒東西。
+
+		void	removeBy (Controller *c, View *r);
+			依照以下條件清除某些訊息：當訊息的發送控制器為 c
+			且接收者為 r 時。這個函數在實作上有其特殊用意，請
+			參閱 MESSAGE.CPP 中本函數之註解。
+
+	misc. note		: MessageQueue 並不繼承自 Queue 而是包含
+					  了一個 Queue 的 instance 。主要理由是為
+					  了避免「強迫型別轉換」之時將不屬於 Message
+					  class 的物件丟進訊息佇列中，同時佇列中
+					  必須存訊息物件的複本而非其指標（為什麼？
+					  您不妨思考一下 Driver::run 訊息迴路中的
+					  內容）。這其實也是一種利用 HAS-A 的技術
+					  達到「繼承」的辦法之一（一般是用 IS-A 的
+					  技術），在許多不具繼承功能的傳統語言（如
+					  C ）中，這是最常用來模擬 OOP 「繼承性」
+					  的方法。
+
+					  MWL 中 MessageQueue 唯一的 instance 便是
+					  msgqueue ，再開啟其他的 instnace 均是徒勞。
+
+
+Model class (MODEL.H)
+=====================
+
+    class name      : Model
+    inherited from  : Object
+    inherited by    : 所有的應用程式
+	description 	: MVC 中的「模型」，即應用程式
+	constructors	: none.
+	methods 		:
+		virtual void draw (View *from, Port *port, Rect *area);
+			接收來自 view 的「重繪」訊息，將 from 被蓋住或需
+			要重畫的地方重畫，區域指定於 area ，而使用的 Port
+			則由參數 port 所給定。
+
+		virtual void leftButtonDown (View *from, Point *pnt);
+			告知 model 滑鼠的按鈕被按下
+
+		virtual void leftButtonUp (View *from, Point *pnt);
+			告知 model 滑鼠的按鈕已被釋開
+
+		virtual void mouseMove (View *from, Point *pnt);
+			告知 model 滑鼠目前正在 view 的上方移動
+
+		virtual void keyCharIn (View *from, BYTE c);
+			告知 model 有鍵盤字元輸入 (MWL 暫不支援)
+
+		virtual void fromView (View *from);
+			View 和 model 之間的溝通函數
+
+		virtual void fromController (View *from, Controller *ctrl);
+			Controller 經由 View 轉交的訊息由此而來
+
+		virtual BOOL close (View *from);
+			View 向 Model 詢問「是否可以關閉」的函數，內定值
+			傳回 TRUE。
+
+	misc. note		: none.
+
+
+Controller class (CONTROLR.H)
+=============================
+
+    class name      : Controller
+    inherited from  : Object
+    inherited by    : Mouse, Idler, Timer
+	description 	: MVC 中的控制器, 此為一抽像 class
+	constructors	: none.
+    methods         :
+		virtual void pool (MessageQueue *queue);
+			向控制器「詢問」是否有訊息要丟進佇列 queue 中。
+
+	misc. note		: none.
+
+
+Control class (CONTROL.H)
+=========================
+
+    class name      : Control
+    inherited from  : View
+    inherited by    : Button
+	description 	: GUI 中的控制元件
+	constructors	: 和 View class 同
+    methods         :
+		virtual void mouseMove (Point *pnt);
+		virtual void leftButtonDown (Point *pnt);
+		virtual void leftButtonUp (Point *pnt);
+		virtual void selfDraw (Port *port, Rect *area);
+			以上四 method 保護級別為 protected ，亦即你只能藉
+			由「繼承」來使用上面四個 method。
+
+			selfDraw 可用來繪製控制元件的外貌，而其餘三個滑鼠
+			訊息處理函數的功用和 Model class 中的是一樣的。
+
+	misc. note		: none.
+
+
+MultiView class (MULTVIEW.H)
+============================
+
+    class name      : MultiView
+    inherited from  : View
+    inherited by    : Window, Desktop
+	description 	: 使用重疊式視窗介面的 view
+	constructors	: 與 View class 同
+    methods         :
+		virtual void	dispatchMouse (Message *msg);
+			特別修改過的滑鼠訊息遞送演算法，主要當滑鼠按到一
+			個被壓在下面的視窗時，要將它提升至最前方。
+
+		virtual void	attachSubview (View *subview);
+		virtual void	removeSubview (View *subview);
+		virtual void	moveSubview (View *subview, Point *offset);
+		virtual void	resizeSubview (View *subview, int width, int height);
+		virtual void	moveResizeSubview (View *subview, Point *offset,
+										   int width, int height);
+			修改過的 subview 操作函數，moveResizeSubview 是
+			moveSubview 和 resizeSubview 兩函數的結合，用途是
+			改變 subview 的尺寸和位置。
+
+		virtual void	bringTop (View *subview);
+			將某個 subview 提升至視窗的最前方。
+
+		virtual void	beginMove (View *subview);
+		virtual void	beginResize (View *subview, ResizePlace rp);
+			這兩個工具函數將使得這個 Multiview 進入「搬移」或「
+			改變尺寸」狀態。一旦進入這兩個狀態，參數 subview 所
+			指定的 view 將可以被使用者以滑鼠設定其新位置或新尺
+			寸，直到滿意為止。
+
+		virtual void	activateSubview (View *subview);
+			保護級別為 protected。將某個 subview 提升，並設為
+			訊息遞送的第一優先考慮對象。
+
+		virtual void	calcOverlapping (View *from, Rect *newRect,
+										 Rect *oldRect);
+			保護級別為 protected。這是重疊視窗的真正重要演算
+			法，目的在計算兩兩視窗於移動／改變尺寸前後，整個
+			視窗群的差異，再藉由這差異，適度地完成重繪或遮蓋
+			動作。詳見 MULTVIEW.CPP 關於此段之註解。
+
+		virtual void	drawBorder ();
+		virtual void	freeAreaHide (View *subview, FreeArea *area);
+		virtual void	freeAreaShow (View *subview, FreeArea *area);
+		virtual void	selfShowDraw (FreeArea *area);
+		virtual void	selfHide (Rect *area);
+			以上為供 calcOverlapping 所用之工具函數。
+
+	misc. note		: none.
+
+
+Window class (WINDOW.H)
+=======================
+
+	class name		: Window
+	inherited from	: MultiView
+	inherited by	: none
+	description 	: 一個標準的視窗，具有 MultiView 的重疊視
+					  窗功能（可用來管理其子視窗），也具有標
+					  頭棒、關閉鈕、尺寸改變框、放大／縮小鈕。
+
+    constructors    :
+		Window (char *captionText, Rect *prect, View *pparent, Model *client,
+				BOOL attach = FALSE,
+				BOOL killModel = FALSE);
+			建立一個視窗，captionText 為標頭棒之文字內容，餘與
+			View 同。
+
+    methods         :
+		virtual void	setCaption (char *captionText);
+			改變標頭棒的文字內容。
+
+		virtual void	setResizable (BOOL flag = TRUE);
+			將 Window 設為可變尺寸／不可變尺寸。若設為 TRUE ，
+			表此視窗可改變大小。
+
+		virtual void	setAlwaysOnTop (BOOL flag = FALSE);
+			表此視窗是否永遠置於視窗群之上 (MWL 不支援)
+
+		virtual void	selfDraw (Port *port, Rect *area);
+		virtual void	drawCaption ();
+		virtual void	setupWidgets ();
+			計算和繪出視窗外貌靠得就是這三個函數。若想改變視
+			窗的外貌，可從這三個函數下手。
+
+    misc. note      :
+
+
+Desktop class (DESKTOP.H)
+=========================
+
+    class name      : Desktop
+    inherited from  : MultiView
+    inherited by    : none
+	description 	: Micro Windows/Lite 的桌面
+	constructors	:
+		Desktop (Rect *prect);
+			建立一桌面。桌面沒有親代、沒有 clientModel。
+
+    methods         :
+		BOOL	quit (int errorlevel = 0);
+			離開整個 GUI 、關閉所有的視窗。若傳為 FALSE，
+			表示有視窗拒絕離開。
+
+		BOOL	isEmpty ();
+			詢問目前桌面上是否已空無一物，TRUE 表的確如此。
+
+	misc. note		: 公用變數 desktop 為其唯一的 instance
+
+
+Button class (BUTTON.H)
+=======================
+
+    class name      : Button
+    inherited from  : Control
+    inherited by    : none
+	description 	: 標準的「按鈕」，並提供「陷落」的立體效果
+    constructors    :
+		Button (char *text, Rect *prect, View *pparent, Model *client,
+				BOOL attach = TRUE, BOOL killModel = FALSE);
+			建立一個按鈕。text 為按鈕的文字內容，餘與 view 同。
+
+	methods 		:
+		virtual void drawButton (Port *port);
+			drawButton 繪製按鈕外框，是由 selfDraw 所呼叫。
+
+		virtual void drawText (Port *port);
+			drawText 繪製按鈕文字，是由 drawButton 所呼叫。
+
+	misc. note		: none.
+
+
+Collection class (COLLECT.H)
+============================
+
+    class name      : Collection
+    inherited from  : Object
+    inherited by    : IndexedCollection, Stack, Queue
+	description 	: 一個抽像 class ，用以規範 container 的功能
+	constructors	: none.
+    methods         :
+		virtual BOOL	put (Object *obj);
+			將一個物件的指標放入 container 中
+
+		virtual BOOL	hasElement (Object *obj);
+			詢問某物件是否存在於此 container 中，TRUE 表有。
+			（注意：此函數得由其 derived class 定義其意義）
+
+		virtual Object	*get ();
+			取得（或取出，視其 derived class 定義）一個物件。
+
+		virtual void	purge ();
+			清除 container 內所有的資料。
+
+		virtual BOOL	isEmpty ();
+			詢問此 container 是否為空，TRUE 表確實如此。
+
+	misc. note		: Collection 及其 derived class 均只儲存
+					  物件的指標。至於物件的生成和消滅，得由
+					  程式設計者自行管理。
+
+
+IndexedCollection class (COLLECT.H)
+===================================
+
+    class name      : IndexedCollection
+    inherited from  : Collection
+    inherited by    : List
+	description 	: 有序的 container，增加一個「位置指標」
+					  （或稱「索引值」，index）
+	constructors	: none.
+	methods 		: 與 Collection 同，除了增加以下數者：
+		virtual Object	*first ();
+			將 index 移至此 container 的最前端
+
+		virtual Object	*next ();
+			將 index 移至下一個元素
+
+		virtual Object	*last ();
+			將 index 移至最後一個元素
+
+		virtual Object	*previous ();
+			將 index 移至前一個元素
+
+		virtual Object	*here ();
+			回傳目前 index 所指向的物件指標
+
+	misc. note		: none.
+
+
+Stack class (STACKQUE.H)
+========================
+
+    class name      : Stack
+    inherited from  : Collection
+    inherited by    : none
+	description 	: 標準的「後進先出」 (LIFO) 堆疊
+	constructors	: none.
+	methods 		: 與 Collection 同。put 表將物件「推入」
+					  堆疊中，即 "push" ，而 get 則表將物件
+					  「彈出」堆疊，即 "pop"。
+	misc. note		: 這個 class 使用一個串列 (List) 實作而
+					  成，因此堆疊無容量限制。
+
+
+Queue class (STACKQUE.H)
+========================
+
+    class name      : Queue
+    inherited from  : Collection
+    inherited by    : none
+	description 	: 標準的「先進先出」 (FIFO) 佇列
+	constructors	: none.
+	methods 		: 與 Collection 同。
+	misc. note		: 與 Stack 一樣，使用一個 List 實作。
+
+
+List class (LIST.H)
+===================
+
+    class name      : List
+    inherited from  : IndexedCollection
+    inherited by    : none
+    description     : 一個標準的連結串列
+    constructors    : none
+	methods 		: 和 IndexedCollection 同，你可以藉由移動
+					  索引（位置指標）以游走整個串列。
+    misc. note      : none.
+
+
+Mouse class (MOUSE.H)
+=====================
+
+    class name      : Mouse
+    inherited from  : Controller
+    inherited by    : none
+    description     : 滑鼠控制器。
+    constructors    : n/a
+    methods         :
+        BOOL lock (View *sendTo, Port *lockRange = NULL);
+            將滑鼠「鎖」在 sendTo 所限制的範圍內，還可藉由
+            lockRange 指定要鎖在那個 port 上。
+
+            傳回 TRUE 表成功，傳回 FALSE 則表滑鼠已被人先占住
+            了。
+
+        void unlock ();
+            將滑鼠「解鎖」。
+
+        void hide ();
+            將滑鼠游標隱藏起來，此時滑鼠仍有作用。
+
+        void show ();
+            重新出顯示滑鼠游標。
+
+    misc. note      : none.
+
+
+Idler class (IDLER.H)
+=====================
+
+    class name      : Idler
+    inherited from  : Controller
+    inherited by    : none
+    description     : 空檔閒來無事時發訊息的 Controller 。
+    constructors    : n/a
+    methods         :
+        void apply (View *applier);
+            向 Idler 申請發送訊息。
+
+        void remove (View *applier);
+            解除向 Idler 的申請。
+
+    misc. note      : none
+
+
+Timer class (TIMER.H)
+=====================
+
+    class name      : Timer
+    inherited from  : Controller
+    inherited by    : none
+    description     : 系統時鐘
+    constructors    : n/a
+    methods         :
+        void apply (View *applier, unsigned int msec = 1000);
+            向 Timer 申請發送訊息，msec 為時間間隔，單位為千
+            分之一 (1/1000) 秒。
+
+        void remove (View *applier);
+            解除向 Timer 的申請。
+
+    misc. note      : 這個模組使用 BIOS 系統中斷。
+
+
+Driver class (GUI.H)
+====================
+
+    class name      : Driver
+    inherited from  : Object
+    inherited by    : none
+    description     : 提供 Micro Windows/Lite 的起始和結束設定。
+    constructors    :
+        Driver ();
+            啟動 Micro Windows/Lite 。
+
+    methods         :
+        int run ();
+            進入訊息迴路，回傳值為系統結束時 desktop 物件傳回之值。
+
+    misc. note      : none
+
+
+
+
+第三部份  繼承新的 class：擴充你的 Micro Windows/Lite
+=====================================================
+
+在使用 MWL 建立程式的過程中，你可能發現一些不足，而想要自己擴
+充新的 class 。以下便是一些擴充的指引，供您參考。請您在建立新
+的 class 之前，務必看過前部份的 class 層級組織參考手冊，以及
+MWL 的各個標頭檔，尤其是您想要繼承的 class 的 .H 和 .CPP 檔，
+以便了解它們的工作方式。
+
+
+(a) 建立新的圖形物件：繼承 Shape class
+======================================
+
+建議參考對象：Line class (SHAPE.H & SHAPE.CPP)
+
+Shape class 提供 orig 和 dest 兩個成員函數，是用來作「起始點
+」和「終點」兩參考點的。對 Rectangle 或 FilledRectangle 來說，
+這兩點並無多大差別，但對 Line class 來說，兩者便不能混為一談
+（為什麼？您不妨想想）。
+
+我們不妨假設要繼承一個名為 Ellipse (橢圓) 的 class 。它的建構
+元和 Line、Rectangle class 一樣，接收兩個點或一個矩形，作為其
+「邊界盒」 (bound box) ，將橢圓封閉在裡面。
+
+稍稍學過幾何的朋友都應該知道，橢圓有兩個軸，事實上只要知道邊
+界盒，就可以求出它的長軸和短軸。因此在計算參數上，我們只要在
+建構元這裡就處理完畢了（以下 a、b、center 為成員函數）
+
+    Ellipse::Ellipse (Point *porig, Point *pdest)
+    {
+        Rect boundBox (porig, pdest);
+        orig = *porig;
+        dest = *pdest;
+
+        a = boundBox.width() / 2;
+        b = boundBox.height () / 2;
+        center = orig;      // center 是 Point 的 instance
+        center.move (a, b); // 將 center 移至兩軸交點
+    }
+
+有了參數之後，剩下要做的（通常也是繼承 Shape class 完後唯一
+要作的），就是修改 draw 這個函數了：
+
+    void Ellipse::draw (Port *port)
+    {
+    }
+
+當您將一個圖形物件丟進 Port 時，Port 會先處理修剪 (clipping)
+等動作，一切準備完後，便呼叫該圖形物件的 draw 函數，實際執行
+低階的描點、畫線等動作。該 port 會把自己當參數丟給這個圖形物
+件。
+
+如果您使用 LowGDI 的繪圖函數，您就得知道這個 port 在實際螢幕
+上的位置，因為 LowGDI 使用的是「絕對螢幕座標」。要取得這個座
+標，您可以用以下的方式：
+
+    void Ellipse::draw (Port *port)
+    {
+        Point deviceOrig;   // 絕對座標的起點
+        port->getDeviceOrig (&deviceOrig);
+        ...
+        // 一個小實驗：在兩軸交點描個點試試看，別忘了將
+        // 參數值加上絕對座標值！
+        _lgPoint (a + deviceOrig.x, b + deviceOrig.y);
+    }
+
+此時 deviceOrig 便儲存著絕對螢幕座標。以後當您作任何呼叫到
+LowGDI 的繪圖動作時，都別忘了加上 deviceOrig.x 或 deviceOrig.y
+(如上例所示) ，這樣您所繪的圖才會正確。
+
+範例是用來說明的，實作上面嘛... 就當作者耍賴掉了，實在是希望
+您寄張回函卡來索取正式版嘛。再說，這份文件已經那麼大了，再擺
+個繪橢圓的演算法，豈不更是讓您傷眼勞神？
+
+繪圓、橢圓、曲線等演算法，在一般的電腦圖學書上都有非常詳細的
+說明，您不妨找一本好一點的來參考，相信都會有完整的原始碼可供
+「借用」（或是照抄，很多書都考慮到這點，為您設計得妥妥貼貼啦）。
+
+
+(b) 建立新的控制元件：繼承 Control class
+========================================
+
+建議參考對象：Button class (BUTTON.H & BUTTON.CPP)
+              ColorButton class (DRAW.H & DRAW.CPP)
+
+在 MWL 中 Control class 提 mouseMove、leftButtonDown、
+leftButtonUp 三個成員函數。當您繼承 Control class 以建立新的
+控制元件之時，別忘了善用這三個成員函數。
+
+由於控制元件不像視窗一般複雜，繼承後要做的事也較簡單，不外乎
+是：(1) 接收滑鼠訊息，作適當處理；(2) 修改 selfDraw ，製作新
+的外貌；(3) 於適當時機送訊息給 clientModel；(4) 提供給
+clientModel 存取資料的管道。
+
+前面三點，建議您閱讀 BUTTON.CPP 或 MWINDOWS\APP\DRAW.CPP (於
+下一部份會介紹到) ，會有更深入的了解。至於第四點可能要稍加說
+明一下。
+
+由於 button 的作用很簡單，只要在按下的時候通知 Model 「我被按
+下」這一件簡單的事，因此直接呼叫 clientModel：
+
+	clientModel->fromView (this);
+
+也就足夠。但在更多時候（如具有「開／關」兩種狀態的按鈕）或更
+複雜一點的，如捲動軸、文字輸入欄位，它們就必須在送了 fromView
+訊息之後，還要能提供 model 取得資料的機會。例如我們有一個叫
+SwitchButton 的按鈕，當按下時會將開關打開或關上。當按鈕按下
+時，它會送 fromView 給 model 。我們還得再設計一個函數，例如
+叫 BOOL getSwitchState() （取得開關狀態）的函數，供 model 了
+解開關的狀態。詳細一點來說：
+
+	步驟 1:
+
+		void SwitchButton::leftButtonUp ()
+		{
+			....
+			// 滑鼠放開後, 改變狀態
+			switchState = .... ;
+
+			// 通知 clientModel: 狀態已改變
+			clientModel->fromView (this);
+			...
+		}
+
+	步驟 2:
+
+		void MyModel::fromView (View *from)
+		{
+			if (from == switch)
+			{
+				// 取得開關狀態
+				BOOL state = (SwitchButton*)from->getSwitchState();
+
+				if (state == TRUE)	// 開關是打開的
+				{
+					...
+				}
+				else	// 開關是關起來的
+				{
+					...
+				}
+			}
+		}
+
+
+
+(c) 其他的擴充
+==============
+
+其他類型的擴充，例如繼承 View class、Controller class，思考途
+徑如上。不妨先從幾個現成的例子下手，步步推敲，再決定該增加或
+修改那些東西。但或許你會在收到 Micro Windows 的正式版後再決定
+要不要從事這件工作吧！
+
+
+
+第四部份  DEMO.CPP 及一些現成的應用程式模組
+===========================================
+
+你或許已在本磁片所附的 DEMO.EXE 中發現幾個有趣的應用程式，如
+簡易計算機、時鐘、簡易繪圖程式、旋轉立方體等。你除了可以在你
+的程式中利用它們之外，也可以藉由閱讀它們的原始碼，更深入地了
+解 MWL 的程式寫作。
+
+MWL 所提供的現成應用程式有：
+
+    (a) 計算機 (Calculator class; CALC.H)
+    (b) 數位時鐘 (DigitalClock class; DIGCLOCK.H)
+    (c) 簡易繪圖程式 (DrawApp class; DRAW.H)
+    (d) 旋轉六面體 (CubeDemo class; CUBE.H)
+
+要將它們加入到你的程式中非常簡單：只需把它們的標頭檔含入進來，
+在您需要時建立它們的 instance 就萬事 OK 。就拿計算機來說吧：
+
+    #include "calc.h"
+    ......
+    int main ()
+    {
+        ....
+        // 建立您的應用程式
+        ....
+        new Calculator;
+        ....
+        // 進入訊息迴路
+    }
+
+如此就會在桌面上建立一個計算機應用程式。事實上，它們這些繼承自
+Model 的 class ，其建構元多含有一些參數，例如前面的 Calculator
+class：
+
+    Calculator (View *parent = desktop, Point *spot = NULL);
+
+其中參數 parent 表示這個計算機視窗的親代是誰，而 spot 參數則表
+示視窗要擺在那個點上（這個參考點會成為視窗的左上方）。其餘如
+CubeDemo class、DigitalClock class 也有類似的設計，有的則是要
+求一塊矩形區域。如果你使用內定的參數值，則它們都將以桌面為親
+代，而視窗的位置、尺寸則隨機設定。
+
+以下是各個應用程式的詳細說明。它們的 .CPP 檔都放在 MWINDOWS\APP
+目錄下。
+
+(a) Calculator class
+====================
+
+Calculator 繼承自 Model class ，它的構造簡單，幾乎完全利用到
+MWL 的 Window 和 Button 兩 class 所提供的功能。
+
+在 Calculator::Calculator 中，我們看到建構元先建立計算機視窗，
+而後是十個數字鍵，其次是 C、+、-、*、/ 等功能鍵。
+
+Calculator class 使用 fromView 函數接收來自「功能鍵群」的訊
+息，並以此判斷該作什麼動作。除此之外，Calculator 並無其它特
+別之處。
+
+一些可供您參考改進或作為練習的地方：
+
+    (1) Calculator class 目前只支援長整數，試著將它改成可支
+        援符點數運算。(不難，只要把其中使用長整數以及長整對
+        字串轉換的地方改成浮點即可)
+
+    (2) 增加新的功能，如 M+、M-、MC 等。
+
+    (3) 製作多功能計算機：讓計算機也能有時鐘、鬧鈴... 等功
+        能。(您可參考 DigitalClock 來作這件事)
+
+
+(b) DigitalClock class
+======================
+
+相較之下 DigitalClock 就更簡單了，它只不過向 timer 申請一個訊
+息，然後在收到訊息時更新視窗的時間顯示而已。
+
+
+(c) CubeDemo class
+==================
+
+CubeDemo 無疑是個比較花俏的例子，但它主要也不過是用了 idler
+使它能不斷地在系統有閒時讓立方體旋轉而已（由它不斷地在轉動便
+可知道，GUI 系統中機器閒閒沒事作的時間有多長！）
+
+CubeDemo 的關鍵部份，如 calc3d ，是採用一組簡化過的「轉換矩
+陣」 (transformation martix) 推導而得，其中 rho、theta、phi
+為三個視角參數。事實上這個立方體並沒有在「轉」，而卻是不斷地
+在改變視角，使它看起來是在轉一樣。我們並不打算在這裡詳細介紹
+三度空間繪圖，但您可以在任何一本詳細的電腦圖學書籍中找到它的
+實作方式和數學原理。
+
+對熟悉 Computer Graphics 的朋友來說，CubeDemo 的實作方式可能
+稍嫌「笨拙」，尤其是 calc3d 演算法並未完全最佳化，而實際繪圖
+部份也可能效率稍低，但 CubeDemo 的重點是在示範 MWL 的 OOP 式
+繪圖庫，不是複雜的電腦圖學技巧。
+
+在您所看到的版本中，我們還加上了 "Faster" 和 "Slower" 兩個按
+鈕，您可藉這兩個按鈕改變視窗中立方體的旋轉速度。值得注意的是：
+這個立方體可以在兩個按鈕遮住其部份，或甚至有視窗遮住其部份時
+繼續繪圖，這當然得歸功於「重疊式視窗介面」的設計，尤其是
+MultiView class 的精巧演算法，及 LowGDI 提供的 clipping 使然。
+不信的話，您用 Borland BGI 實作一個「中間被視窗蓋住」的 CubeDemo，
+看要花多少力氣？
+
+
+(d) DrawApp class
+=================
+
+最後一個範例，也可能是最複雜的一個 -- DrawApp ，用到一個目前
+在 MS-Windows 中漸漸普及的概念：「多文件介面」 (MDI; multi
+document interface) 。簡單來說，就是一個應用程式下，允許開啟
+多張「紙」，而每張紙上都可寫上或繪上不同的東西。
+
+現在我們把 DrawApp 釐清楚一點。DrawApp class 本身繼承自 Model
+class ，但它只做兩件事：建立自己和色盤的視窗、開啟新的視窗。
+
+ColorPalette class 也屬於 Model class ，它負責顯示色盤和繪圖
+工具，它同樣也把 Button 「利用到極限」。為了在 button 上顯示
+顏色，我們特地繼承了一個名為 ColorButton 的 class ，它不過是
+將 Button::drawText 改成繪顏色的功能罷了。而它使用的技巧，正
+是前一部份我們提到「衍生新的 class」的方法。
+
+DrawWindow class 才是真正的繪圖程式，它也繼承自 Model class。
+當色盤上的 "Create" button 被按下時，DrawApp 便會產生一份
+DrawWindow 的 instance。
+
+DrawWindow 使用 ColorPalette 所設定的顏色和工具。當滑鼠被按
+下時，它就產生一個目前所繪圖形的物件。往後所有對這個圖形的動
+作，均由一個 currentShape 指標處理。我們只要呼叫
+currentShape->draw() ，不管它是什麼圖形，都能不負使命地達成
+繪圖的任務。
+
+還有更精采的地方。DrawWindow 裡有一個名叫 shapeList 的資料成
+員，本身是個 List class 的 instance 。當一個圖形被建立、調整
+尺寸完（即滑鼠按鈕放開後），這個圖形物件便會被丟進 shapeList
+中。往後當視窗需要重繪時，它只需將 shapeList 裡的物件一一調
+出，呼叫它的 draw 函數就可以了。OOP 的威力，尤其是泛型容器的
+便利處，就是在這種地方顯露出來的。
+
+只要再稍事修改，增加多一些圖形種類，或是加入物件的搬移、調整
+尺寸、存檔／讀檔等功能，一個略具雛形的插畫軟體就誕生了！
+
+
+(e) DEMO.CPP
+============
+
+DEMO.CPP 的寫作大概是我在撰寫 Micro Windows/Lite 的過程中最愉
+快的事了。短短幾行程式，便蹦出一堆物件在眼前飛來飛去，這不是
+很美妙的事嗎？尤其是當 DEMO.CPP 不費半點力就從 MS-DOS 版移植
+到 MS-Windows ，且在 MS-Windows 上表現一如 MS-DOS 般，甚至還
+能出現「和 MS-Windows 應用軟體並存」的畫面時，那種喜悅不是短
+短數言便能述盡的。
+
+
+
+第五部份  從 MS-DOS 移植到 MS-Windows
+=====================================
+
+在 MS-Windows 再建立一套 GUI 並不是件容易的事，不但要同時了解
+自己 GUI 的需要，也得了解對方 (MS-Windows) 的架構。所幸，由於
+Micro Windows/Lite 在設計之初即考慮到可攜性問題，你在 MWL 上
+所發展的應用程式都可以原封不動的搬過來（如果你只用到 MWL 所提
+供的部份）。
+
+要將 Micro Windows/Lite 的應用程式移植到 MS-Windows 版上，你
+得注意以下幾點：
+
+      (1) 所有的 Model class 都可以保持原封不動
+      (2) 原來主程式的 main() 函數要改名為 mwmain()
+      (3) 連結時除了要將程式庫改名為 MWLIBWIN.LIB 外，還要再
+          多連結一個名為 WINMAIN.DEF 的檔案。關於這部份請參考
+          MWINDOWS\WIN 目錄下的 DEMO.PRJ 或 HELLO.PRJ 。
+
+只要你的程式符合 Micro Windows/Lite 的設計規範，以我們的經驗
+移植成功率接近 100% ，除了以下狀況：
+
+      (1) 你使用了 MS-DOS/BIOS 的中斷呼叫（如鍵盤讀取、磁碟
+		  存取等）
+      (2) 你使用了 BC++ 提供的一些低階功能（如 sound、delay）
+
+以上為應用程式的移植，接下來我們來看看 Micro Windows/Lite 是
+如何移植到 MS-Windows 上的。
+
+MWL 的低階模組（即使用到 MS-DOS/LowGDI）的部份有以下兩個：
+
+      (1) LowGDI (使用 BIOS、MS-DOS 和 Video RAM 直接存取)
+      (2) Timer class (使用 BIOS 中斷)
+
+除此之外，我們還得配合 MS-Windows 「奇特」的程式寫作風格行事，
+這些包括了：
+
+      (1) 繪圖裝置的存取：MS-Windows 在每次繪圖之時，都必得要
+          向系統申請一「裝置本文」(device context) 以便繪圖。
+          因此 Port class 也必須作適當的改變，以便取得此一裝置
+          本文 (見 MWINDOWS\WIN\LIB\PORT.CPP )
+
+      (2) 新的訊息迴路：MS-Windows 有自己的訊息遞送機制。我們
+          在新的 GUI.CPP (見 MWINDOWS\WIN\LIB\GUI.CPP) 中作了
+          一些必要的修改，以配合 Windows 的怪習慣。
+
+      (3) 應用程式的啟始程序不同：MS-Windows 的應用程式是由
+          WinMain 開始。而 WinMain 得負責處理許多 Windows 應
+          用程式的起始設定。為了避免 MWL 的程式設計者在此傷
+          腦筋，我們在 WINMAIN.CPP (MWINDOWS\WIN\LIB\WINMAIN.CPP)
+          中已將此段工作處理完。
+
+WINMAIN.CPP 提供 WinMain() 函數，負責向 MS-Windows 註冊並開啟
+我們的 「Micro Windows/Lite MS-Windows 版平台視窗」，這是一個
+占據整個螢幕的視窗，擺明「我們就是在 Windows 內另起爐灶」。這
+個模組同時也處理接收 MS-Windows 送來的「回傳訊息」(call-back
+messages) ，這些訊息包括重繪、滑鼠控制、時鐘等，它會將這些收到
+的訊息作適當的處理，以便在我們的訊息迴路中供諸 Controller 使用。
+
+LOWGDIW.CPP 是 MS-Windows 版的 LowGDI ，使用 Windows 提供的繪
+圖函數繪圖。這個版本的 LowGDI 在每次繪圖前都會檢查是否有 device
+context 存在。Device context 則有 WINMAIN.CPP 提供。
+
+TIMER.CPP 和 WINTIMER.CPP 是修改過的 Timer class 。
+
+PORT.CPP 修改過 Port::draw ，主要是在每次繪圖之前，向 WINMAIN.CPP
+索取 device context ，再呼叫圖形物件 (Shape class) 的 draw ，
+Shape::draw 呼叫 LowGDI 時就不怕沒 device context 可用。
+
+基本上呢，既然只要改寫或加寫一兩個模組，便可以把 MS-Windows
+「架空」起來供我們使用，再詳細談 MS-Windows 就沒意思了。不過
+不管怎麼說，MS-Windows 畢竟還是更接近「作業環境」，提供的東西
+也比較多。因此，如果你有興趣，想腳踏兩條船，既用 MWL 方便寫作，
+又想利用 MS-Windows 的便利處的話：
+
+    (1) GUI.CPP 中的 Driver::run 是融合 MS-Windows 和 MWL 的
+        訊息迴路，請先參考這一部份再決定你要不要自己接手。
+
+    (2) WINMAIN.CPP 負責一切 MS-Windows 要求的事務，其中包括
+        幾個共用變數，詳細說明如下：
+
+    (3) pfHandle 是 Micro Windows/Lite 平台的「應用程式頭銜」
+        (application instance handle) ，MS-Windows 不會認識
+        Micro Windows，它只認識這個 handle 。 (pf 代表的意義
+        為 platform，也就是平台的意思)
+
+    (4) pfWindow 是 Micro Windows/Lite 所霸占的視窗，這個視窗
+        的大小也就是 desktop 的大小。
+
+    (5) _winTimerOn 是供 Timer class 用的 flag
+
+    (6) _winMouseButton 供 LowGDI 提供 Mouse class 使用
+
+    (7) _winDC 為目前申請到的 device context ，_winUsingDC
+        則表示此 _winDC 是否有效。
+
+    (8) _winRepaintCycle 表示目前是否處於 MS-Windows 的
+        「視窗重繪階段」。此時 Windows 會給你一個 device
+        context ，而你必須使用這個 DC 而不能自己申請新
+        的 DC 。當 _winRepaintCycle == TRUE 時，LowGDI
+        便只會使用 Windows 所給的 DC。
+
+    (9) InitPfClass () 這個函數負責向 Windows 註冊一個
+        新的視窗 class (Windows 也用 OOP 觀念設計，但請不要和
+        C++ 的混為一談)
+
+    (A) CreatePfWindow() 建立一個視窗。
+
+    (b) PfProc 就是 MS-Windows 的「回撥函數」 (call back
+        function) ，你可以把它當作一個視窗物件的成員函數，
+        所有負責處理 Windows 送來的訊息的機制全在這裡。
+
+在 Micro Windows 正式版中，MWL 和 Windows 的關係會被更清楚的
+劃分，同時視窗的處理、繪圖的動作也將更加乾淨而有效率。
+
+
+後記
+====
+
+早期，國人自製的重疊式視窗以「慧星一號」和百英德公司所出之多
+套繪圖簡報軟體為先河。其後又取得一份名為 "Y-Window" 的視窗介
+面，這名字自然是為了戲謔 X-Window 而取的。它應該算是第一個以
+C++ 完成而在 MS-DOS 下執行的完整視窗介面（其第一版原以 C 寫
+成，具有和 MS-Windows 幾乎同名的 API -- 當然精簡小巧多了）。
+
+其後是一年多前的課餘無聊時間，為了磨練 coding 而寫了一套名叫
+"Toy" 的 GUI。正如其名，只是個玩具，架構不成熟、程式有缺陷、
+效率難滿意... 。但也不了了之。
+
+最近則是為了這本書，也為了再重新審視自己在設計架構上的能力，
+搞了這架飛機，可真說是放出了一大罐蟲：寫程式不算最累，而要為
+自己「自以為很好懂且很好看」的程式加註解寫文件，才是最折騰人
+的事情！
+
+Micro Windows/Lite 移植到 Windows 的過程異常順利，coding 只
+花了三小時。但 Windows API ，尤其是 GDI 部份有一個致命的手冊
+上的錯誤，卻讓總除錯時間差點沒破十小時大關。這得感謝 Capita
+為了除錯而犧牲午餐，自願除到無蟲 (bug-free) 時才吃飯的辛苦。
+好在最後他也吃到飯了 -- 該 bug 於晚餐時間前幾秒鐘正式宣告「
+hack 完成」。
+
+在 programmer 的世界中，尤其是玩過／正在玩 UNIX 的這一群來說，
+從事 hack 工作的人 -- hacker -- 不但不是報紙上拿來形容切入系
+統、放出病毒的壞蛋，反而是用來封給「超級除錯員」、「超級程式
+員」等高手中的高手用的 -- 不要用這種眼神看我，我可從來沒說過
+hacker 的封號是可以自己往臉上貼的啊！）Capita 除錯有功，我卻
+忘了請他吃飯，希望這份文件別提醒他向我邀功。
+
+Ok，言盡於此。老話一句：快快寄回函卡來吧！祝本書讀者個個閱讀
+愉快， "hack" 順利。 :)
+
+                                             Deng Liu
+                                             November 1993.
+

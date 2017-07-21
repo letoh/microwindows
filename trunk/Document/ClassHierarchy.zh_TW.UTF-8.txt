@@ -1,0 +1,64 @@
+┌────────────────────────┐
+│                                                ├┐
+│                                                ││
+│Micro Windows/Lite   DEMO.EXE 之 class hierarchy││
+│                                                ││
+│                                                ││
+│                             Chart by Capita Lai││
+└┬───────────────────────┘│
+  └────────────────────────┘
+
+
+Object ──┬─── Driver (gui.h)
+           │
+(object.h) ├─── Model ────┬── DrawApp (draw.h)
+           │     (model.h)       ├── DigitalClock (digclock.h)
+           │                     ├── CubeDemo (cube.h)
+           │                     ├── Calculator (calc.h)
+           │                     ├── AboutApp (about.h)
+           │                     ├── ColorPalette (draw.h)
+           │                     └── DrawWindow (draw.h)
+           │
+           ├─── View  ────┬── MultiView ──┬── Window
+           │     (view.h)        │    (multview.h)   │   (window.h)
+           │                     │                   │
+           │                     │                   └── Desktop
+           │                     │                        (desktop.h)
+           │                     │
+           │                     └── Control ───┬── Button
+           │                           (control.h)    │    (button.h)
+           │                                          │
+           │                                          └── ColorButton
+           │                                                 (draw.h)
+           │
+           ├─── GObject ───┬── Rect  (gobject.h)
+           │      (gobject.h)    ├── Point (gobject.h)
+           │                     ├── Port ──────── ViewPort
+           │                     │   (port.h)              (viewport.h)
+           │                     │
+           │                     └── RectArray  ───── FreeArea
+           │                           (freearea.h)         (freearea.h)
+           │
+           ├─── Shape ────┬── Text  (shape.h)
+           │     (shape.h)       ├── StereoBorder (shape.h)
+           │                     ├── Rectangle  ───── FilledRectangle
+           │                     │     (shape.h)                (shape.h)
+           │                     │
+           │                     └── Line (shape.h)
+           │
+           ├─── ColorObject (draw.h)
+           │
+           ├─── Collection  ─┬── IndexedCollection  ── List
+           │       (collect.h)   │        (collect.h)         (list.h)
+           │                     │
+           │                     ├ Stack (stackque.h)
+           │                     └ Queue (stackque.h)
+           │
+           ├─── ListNode (list.h)
+           │
+           ├─── Controller  ─┬── Timer (timer.h)
+           │       (controlr.h)  ├── Mouse (mouse.h)
+           │                     └── Idler (idler.h)
+           │
+           └─── Message (message.h)
+
