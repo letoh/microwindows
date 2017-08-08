@@ -59,7 +59,7 @@ BOOL    _lgOpenGraphics()
     topwin = XCreateSimpleWindow(dpy, RootWindow(dpy, screen),
                                  0, 0, _winScrWidth, _winScrHeight,
                                  0, black, white);
-    XSetStandardProperties(dpy, topwin, "MicroWindow (Demo)", "MicroWindow", None, NULL, 0, NULL);
+    XSetStandardProperties(dpy, topwin, "MicroWindows (Desktop)", "MicroWindows", None, NULL, 0, NULL);
     XSelectInput(dpy, topwin, ExposureMask|PointerMotionMask|ButtonPressMask|ButtonReleaseMask);
     gc = XCreateGC(dpy, topwin, 0, NULL);
 
