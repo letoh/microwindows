@@ -51,11 +51,6 @@ DEMO_SRCS += demo.cpp
 DEMO_OBJS = $(SHARED_OBJS) $(PLAT_OBJS) $(APPLET_OBJS) $(DEMO_SRCS:.cpp=.o)
 
 
-#OBJS = $(addsuffix .o, $(basename $(SRCS)))
-#OBJS = $(patsubst %.cpp,%.o,$(SRCS))
-OBJS0 = $(SRCS:.c=.o)
-OBJS = $(OBJS0:.cpp=.o)
-
 CFLAGS = -I../Shared/include -Iinclude -std=c99 -fpermissive `pkg-config --cflags x11`
 CXXFLAGS = -I../Shared/include -Iinclude -std=c++98 -fpermissive `pkg-config --cflags x11`
 LDFLAGS = `pkg-config --libs x11`
