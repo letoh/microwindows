@@ -38,7 +38,7 @@ Calculator::Calculator (View *parent, Point *spot)
         Point btnPtn (((i-1) % 3) * 30, ((i-1) / 3) * 30);
         btnPtn.move (&orig);
         btnRect.move (&btnPtn);
-        itoa (i, btnText, 10);
+        sprintf(btnText, "%d", i); //itoa (i, btnText, 10);
 
         numBtn[i] = new Button (btnText, &btnRect, calcWindow, this);
     }
@@ -86,7 +86,7 @@ void Calculator::fromView (View *from)
                  break;
         }
         strcpy (last, "");
-        ltoa (z, current, 10);
+        sprintf(current, "%ld", z); //ltoa (z, current, 10);
         action = -1;
     }
     else if (from == cBtn)
