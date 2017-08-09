@@ -113,6 +113,7 @@ int Driver::run ()
 
         // and then destroy the message object
         delete msg;
+        msg = NULL;
     }
 
     int returnval = 0;
