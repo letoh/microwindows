@@ -125,7 +125,7 @@ void    _lgSolidRect(int x1, int y1, int x2, int y2)
 
 void _lgDrawText (int x, int y, char *text)
 {
-    XDrawString(dpy, topwin, gc, x, y, text, strlen(text));
+    XDrawImageString(dpy, topwin, gc, x, y, text, strlen(text));
 }
 
 int     _lgGetScreenWidth()
