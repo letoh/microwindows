@@ -13,7 +13,7 @@
 #include "message.h"
 #include "mouse.h"
 
-Window::Window (char *captionText, Rect *prect, View *pparent,
+Window::Window (const char *captionText, Rect *prect, View *pparent,
                 Model *client, BOOL attach, BOOL killModel)
        :MultiView (prect, pparent, client, FALSE, killModel)
 {
@@ -59,7 +59,7 @@ void Window::deactivate ()
     if (alwaysOnTop) parent->bringTop (this);
 }
 
-void Window::setCaption (char *captionText)
+void Window::setCaption (const char *captionText)
 {
     if (caption) delete caption;
     caption = new Text (captionText, &captionRect);

@@ -15,7 +15,7 @@
 #include "global.h"
 #include "model.h"
 
-Button::Button (char *text, Rect *prect, View *pparent, Model *client,
+Button::Button (const char *text, Rect *prect, View *pparent, Model *client,
                 BOOL attach, BOOL killModel)
        :Control (prect, pparent, client, FALSE, killModel)
 {

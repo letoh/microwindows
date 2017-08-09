@@ -21,14 +21,14 @@ class Text;
 class Window : public MultiView
 {
 public:
-    Window (char *captionText, Rect *prect, View *pparent, Model *client,
+    Window (const char *captionText, Rect *prect, View *pparent, Model *client,
             BOOL attach = FALSE,
             BOOL killModel = FALSE);
     ~Window ();
 
     virtual void    activate ();
     virtual void    deactivate ();
-    virtual void    setCaption (char *captionText);
+    virtual void    setCaption (const char *captionText);
     virtual void    setResizable (BOOL flag = TRUE);
     virtual void    setAlwaysOnTop (BOOL flag = FALSE);
     virtual void    resize (int width, int height, View *parrent = NULL);

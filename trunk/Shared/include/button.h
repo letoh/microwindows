@@ -24,7 +24,7 @@
 class Button : public Control
 {
 public:
-    Button (char *text, Rect *prect, View *pparent, Model *client,
+    Button (const char *text, Rect *prect, View *pparent, Model *client,
             BOOL attach = TRUE, BOOL killModel = FALSE);
     ~Button ();
 

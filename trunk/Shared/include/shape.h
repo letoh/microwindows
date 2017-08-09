@@ -65,15 +65,15 @@ public:
 class Text : public Shape
 {
 public:
-    Text (char *pstring, Point *porig, Point *pdest = NULL);
-    Text (char *pstring, Rect *boundbox);
+    Text (const char *pstring, Point *porig, Point *pdest = NULL);
+    Text (const char *pstring, Rect *boundbox);
     Text (Text &ptext);
     ~Text();
 
     virtual void    draw (Port *port);
 
 protected:
-    void copyString (char *str);
+    void copyString (const char *str);
     char *string;
     BOOL bounded;
 };

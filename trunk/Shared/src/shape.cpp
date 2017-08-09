@@ -101,7 +101,7 @@ void FilledRectangle::draw (Port *port)
     _lgSolidRect (x + orig.x, y + orig.y, x + dest.x, y + dest.y);
 }
 
-Text::Text (char *pstring, Point *porig, Point *pdest)
+Text::Text (const char *pstring, Point *porig, Point *pdest)
 {
     copyString (pstring);
     orig = *porig;
@@ -114,7 +114,7 @@ Text::Text (char *pstring, Point *porig, Point *pdest)
     else bounded = FALSE;
 }
 
-Text::Text (char *pstring, Rect *boundbox)
+Text::Text (const char *pstring, Rect *boundbox)
 {
     copyString (pstring);
     bounded = TRUE;
@@ -154,7 +154,7 @@ void Text::draw (Port *port)
                  string);
 }
 
-void Text::copyString (char *str)
+void Text::copyString (const char *str)
 {
     string = new char [strlen(str) + 1];
     strcpy (string, str);
