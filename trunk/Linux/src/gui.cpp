@@ -90,6 +90,9 @@ int Driver::run ()
                 _winButtonState = LGM_BUTTONUP;
                 buttonPressed = 0;
             }
+            else if (e.type == Expose && e.xexpose.count == 0) {
+                desktop->draw ();
+            }
             else if (e.type == ClientMessage) {
                 if ((Atom)e.xclient.data.l[0] == wm_delete_window) {
                     break;
