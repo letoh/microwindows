@@ -37,7 +37,7 @@ void DigitalClock::fromController (View *from, Controller *ctrl)
     Port *port = from->getClientPort ();
     port->setPenColor (PPC_White);
     port->setBgColor (PPC_Gray);
-    port->draw (&Text (buf, &clkRect));
+    port->draw (_(Text (buf, &clkRect)));
 }
 
 BOOL DigitalClock::close (View *from)

@@ -59,7 +59,7 @@ void Button::leftButtonUp (Point *pnt)
 void Button::drawButton (Port *port)
 {
     port->setPenColor (PPC_Gray);
-    port->draw (&FilledRectangle (&clientRect));
+    port->draw (_(FilledRectangle (&clientRect)));
     port->setPenColor (PPC_Black);
     port->setBgColor (PPC_Gray);
     drawText (port);
@@ -67,7 +67,7 @@ void Button::drawButton (Port *port)
     StereoType t = Convex;
     if (hitted == TRUE) t = Concave;
 
-    port->draw (&StereoBorder (&clientRect, t, 1));
+    port->draw (_(StereoBorder (&clientRect, t, 1)));
 }
 
 void Button::drawText (Port *port)

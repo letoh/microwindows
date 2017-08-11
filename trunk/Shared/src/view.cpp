@@ -137,7 +137,7 @@ void View::maximize ()
     Rect parentCli;
 
     parent->getClientRect (&parentCli);
-    parent->moveResizeSubview (this, &Point (- viewRect.x1, - viewRect.y1),
+    parent->moveResizeSubview (this, _(Point (- viewRect.x1, - viewRect.y1)),
                                parentCli.width(), parentCli.height());
 }
 
@@ -337,7 +337,7 @@ void View::beginResize (View *subview, ResizePlace rp)
 void View::selfDraw (Port *port, Rect *area)
 {
     port->setPenColor (PPC_Gray);
-    port->draw (&FilledRectangle (area));
+    port->draw (_(FilledRectangle (area)));
 }
 
 

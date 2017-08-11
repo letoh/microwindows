@@ -162,10 +162,10 @@ void Calculator::drawCalculator (Port *port)
 
     sprintf (bar + 1, "%13ld", num);
 
-    port->draw (&StereoBorder (&evaluator, Concave, 1));
+    port->draw (_(StereoBorder (&evaluator, Concave, 1)));
     port->setPenColor (PPC_White);
     port->setBgColor (PPC_Gray);
-    port->draw (&Text (bar, &evaluator));
+    port->draw (_(Text (bar, &evaluator)));
 }
 
 void Calculator::draw (View *from, Port *port, Rect *area)

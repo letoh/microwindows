@@ -35,7 +35,7 @@ void DrawWindow::draw (View *from, Port *port, Rect *area)
 {
     port->setPenMode (PPM_Normal);
     port->setPenColor (PPC_White);
-    port->draw (&FilledRectangle (area));
+    port->draw (_(FilledRectangle (area)));
 
     Shape *s = (Shape*)shapeList.first();
     do
@@ -111,8 +111,8 @@ DrawApp::DrawApp (View *pparent, Rect *drawRect)
     Rect r;
     if (drawRect == NULL) pparent->getRandomAttachRect (&r); else r = *drawRect;
     appWindow = new Window ("Simple Draw", &r, pparent, this, TRUE, TRUE);
-    new ColorPalette (this, appWindow, &Point (10, 10));
-    new DrawWindow (this, appWindow, &Rect (100, 20, 300, 200));
+    new ColorPalette (this, appWindow, _(Point (10, 10)));
+    new DrawWindow (this, appWindow, _(Rect (100, 20, 300, 200)));
 }
 
 void DrawApp::createDrawWindow ()
@@ -208,6 +208,6 @@ void ColorButton::drawText (Port *port)
     r.move (2, 2);
     r.resize (r.width() -4, r.height() -4);
     port->setPenColor (btnColor);
-    port->draw (&FilledRectangle (&r));
+    port->draw (_(FilledRectangle (&r)));
 }
 

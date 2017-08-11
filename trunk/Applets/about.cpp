@@ -14,14 +14,14 @@
 
 AboutApp::AboutApp ()
 {
-    new Window ("About MicroWindows", &Rect (70, 190, 570, 290),
+    new Window ("About MicroWindows", _(Rect (70, 190, 570, 290)),
                 desktop, this, TRUE, TRUE);
 }
 
 void AboutApp::draw (View *from, Port *port, Rect *area)
 {
     port->setPenColor (PPC_Black);
-    port->draw (&FilledRectangle (area));
+    port->draw (_(FilledRectangle (area)));
 
     Rect r, a, b;
     from->getClientRect (&r);
@@ -31,7 +31,7 @@ void AboutApp::draw (View *from, Port *port, Rect *area)
 
     port->setPenColor (PPC_White);
     port->setBgColor (PPC_Black);
-    port->draw (&Text ("An experiment on portable and object-oriented GUI", &a));
-    port->draw (&Text ("(c) 1993-2006 Deng Liu", &b));
+    port->draw (_(Text ("An experiment on portable and object-oriented GUI", &a)));
+    port->draw (_(Text ("(c) 1993-2006 Deng Liu", &b)));
 }
 

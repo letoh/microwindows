@@ -37,9 +37,9 @@ HelloApp::HelloApp (View *pparent)
 
     helloWindow = new Window ("Hello, world!", &tmp, pparent,
                               this, TRUE, TRUE);
-    createBtn = new Button ("Create", &Rect (10, 10, 70, 30),
+    createBtn = new Button ("Create", _(Rect (10, 10, 70, 30)),
                             helloWindow, this);
-    insideBtn = new Button ("Inside", &Rect (10, 40, 70, 60),
+    insideBtn = new Button ("Inside", _(Rect (10, 40, 70, 60)),
                             helloWindow, this);
 }
 
@@ -49,7 +49,7 @@ void HelloApp::leftButtonUp (View *from, Point *pnt)
 
     p->setPenColor (PPC_White);
     p->setBgColor (PPC_Gray);
-    p->draw (&Text ("Hello!", pnt));
+    p->draw (_(Text ("Hello!", pnt)));
 }
 
 void HelloApp::fromView (View *from)
@@ -65,7 +65,7 @@ void HelloApp::draw (View *from, Port *port, Rect *area)
     r.move (- r.x1, - r.y1);
     port->setPenColor (PPC_Yellow);
     port->setBgColor (PPC_Gray);
-    port->draw (&Text ("Hello, world!", &r));
+    port->draw (_(Text ("Hello, world!", &r)));
 }
 
 int main ()         // that is a little tricky... ;-)

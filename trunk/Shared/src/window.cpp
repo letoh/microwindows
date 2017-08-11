@@ -73,17 +73,17 @@ void Window::selfDraw (Port *port, Rect *area)
     Rect origRect = viewRect;
     origRect.move (- viewRect.x1, - viewRect.y1);
 
-    port->draw (&StereoBorder (&origRect, Convex, 1));
+    port->draw (_(StereoBorder (&origRect, Convex, 1)));
 
     origRect.move (2, 2);
     origRect.resize (origRect.width() - 4, origRect.height() - 4);
-    port->draw (&StereoBorder (&origRect, Concave, 1));
+    port->draw (_(StereoBorder (&origRect, Concave, 1)));
 
     origRect = viewRect;
     origRect.move (- viewRect.x1, - viewRect.y1);
     origRect.move (5, 23);
     origRect.resize (origRect.width() - 10, origRect.height() - 26);
-    port->draw (&StereoBorder (&origRect, Convex, 1));
+    port->draw (_(StereoBorder (&origRect, Convex, 1)));
 
     drawCaption ();
 }
@@ -143,8 +143,8 @@ void Window::selfMouse (Message *msg)
             if (maximized == TRUE)
             {
                 if (parent == NULL) return;
-                parent->moveResizeSubview (this, &Point(origRect.x1,
-                        origRect.y1), origRect.width(), origRect.height());
+                parent->moveResizeSubview (this, _(Point(origRect.x1,
+                        origRect.y1)), origRect.width(), origRect.height());
                 maximized = FALSE;
                 drawCaption ();
             }
@@ -184,13 +184,13 @@ void Window::drawCaption ()
 //  viewPort->draw (&StereoBorder (&barRect, Concave, 1));
     if (activeFlag) viewPort->setPenColor (PPC_Blue);
     else viewPort->setPenColor (PPC_Gray);
-    viewPort->draw (&FilledRectangle (&captionRect));
+    viewPort->draw (_(FilledRectangle (&captionRect)));
 
     viewPort->setPenColor (PPC_Black);
     viewPort->setBgColor (PPC_Gray);
-    viewPort->draw (&Text ("X", &closeRect));
-    if (maximized) viewPort->draw (&Text (".", &maximizeRect));
-    else viewPort->draw (&Text ("*", &maximizeRect));
+    viewPort->draw (_(Text ("X", &closeRect)));
+    if (maximized) viewPort->draw (_(Text (".", &maximizeRect)));
+    else viewPort->draw (_(Text ("*", &maximizeRect)));
 
     if (activeFlag)
     {
@@ -205,9 +205,9 @@ void Window::drawCaption ()
 
     viewPort->draw (caption);
 
-	viewPort->draw (&StereoBorder (&closeRect, Convex, 1));
-    viewPort->draw (&StereoBorder (&maximizeRect, t, 1));
-	viewPort->draw (&StereoBorder (&captionRect, Convex, 1));
+    viewPort->draw (_(StereoBorder (&closeRect, Convex, 1)));
+    viewPort->draw (_(StereoBorder (&maximizeRect, t, 1)));
+    viewPort->draw (_(StereoBorder (&captionRect, Convex, 1)));
 
 }
 

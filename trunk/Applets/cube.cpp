@@ -27,8 +27,8 @@ CubeDemo::CubeDemo (View *parent, Rect *cubeRect)
     Rect r;
     if (cubeRect == NULL) parent->getRandomAttachRect (&r); else r = *cubeRect;
     cubeWindow = new Window ("3D Cube", &r, parent, this, TRUE, TRUE);
-    speedUp = new Button ("Faster", &Rect(5, 5, 60, 25), cubeWindow, this);
-    speedDown = new Button ("Slower", &Rect(5, 26, 60, 46), cubeWindow, this);
+    speedUp = new Button ("Faster", _(Rect(5, 5, 60, 25)), cubeWindow, this);
+    speedDown = new Button ("Slower", _(Rect(5, 26, 60, 46)), cubeWindow, this);
 
     idler->apply (cubeWindow);
 }
@@ -46,7 +46,7 @@ void CubeDemo::draw (View *from, Port *port, Rect *area)
     r.move (- r.x1, - r.y1);
 
     port->setPenColor (PPC_Black);
-    port->draw (&FilledRectangle (&r));
+    port->draw (_(FilledRectangle (&r)));
 
     erase = TRUE;
     drawcube (port);
@@ -124,7 +124,7 @@ void CubeDemo::lineto3d (Port *p, double x, double y, double z)
     calc3d (x, y, z);
 
     Point dest (xr, yr);
-    p->draw (&Line (&orig, &dest));
+    p->draw (_(Line (&orig, &dest)));
     orig = dest;
 }
 

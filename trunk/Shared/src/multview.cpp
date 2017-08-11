@@ -511,15 +511,15 @@ void MultiView::selfMouse (Message *msg)
                 case MVBdr_Move:
                     borderView->getViewRect (&origRect);
                     moveSubview (borderView,
-                                 &Point (borderRect.x1 - origRect.x1,
-                                         borderRect.y1 - origRect.y1));
+                                 _(Point (borderRect.x1 - origRect.x1,
+                                          borderRect.y1 - origRect.y1)));
                     break;
 
                 case MVBdr_Resize:
                     borderView->getViewRect (&origRect);
                     moveResizeSubview (borderView,
-                                       &Point (borderRect.x1 - origRect.x1,
-                                               borderRect.y1 - origRect.y1),
+                                       _(Point (borderRect.x1 - origRect.x1,
+                                                borderRect.y1 - origRect.y1)),
                                        borderRect.width(),
                                        borderRect.height());
                     break;

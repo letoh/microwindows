@@ -41,8 +41,8 @@ Driver::Driver ()
     initControllers ();
 
     msgqueue = new MessageQueue;
-    desktop = new Desktop (&Rect (0, 0, _lgGetScreenWidth() - 1,
-                                        _lgGetScreenHeight() - 1));
+    desktop = new Desktop (_(Rect (0, 0, _lgGetScreenWidth() - 1,
+                                         _lgGetScreenHeight() - 1)));
 }
 
 Driver::~Driver ()

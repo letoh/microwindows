@@ -41,6 +41,6 @@ BOOL Desktop::isEmpty ()
 void Desktop::selfDraw (Port *port, Rect *area)
 {
     port->setPenColor (PPC_Gray);
-    port->draw (&FilledRectangle (area));
+    port->draw (_(FilledRectangle (area)));
 }
 

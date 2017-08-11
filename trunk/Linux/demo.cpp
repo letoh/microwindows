@@ -24,10 +24,10 @@ int main ()
     Driver gui;
     Rect a (40, 50, 500, 440);
     new DrawApp (desktop, &a);
-    new DigitalClock (desktop, &Point (500, 410));
-    new Calculator (desktop, &Point (0, 0));
-    new CubeDemo (desktop, &Rect (0, 360, 120, 479));
-    new CubeDemo (desktop, &Rect (400, 0, 639, 140));
+    new DigitalClock (desktop, _(Point (500, 410)));
+    new Calculator (desktop, _(Point (0, 0)));
+    new CubeDemo (desktop, _(Rect (0, 360, 120, 479)));
+    new CubeDemo (desktop, _(Rect (400, 0, 639, 140)));
     new AboutApp;
     return (gui.run());
 }

@@ -163,13 +163,13 @@ void Text::copyString (const char *str)
 StereoBorder::StereoBorder (Point *porig, Point *pdest, StereoType t,
               int pdepth)
 {
-    setParam (&Rect (porig, pdest), t, pdepth);
+    setParam (_(Rect (porig, pdest)), t, pdepth);
 }
 
 StereoBorder::StereoBorder (int x1, int y1, int x2, int y2, StereoType t,
               int pdepth)
 {
-    setParam (&Rect (x1, y1, x2, y2), t, pdepth);
+    setParam (_(Rect (x1, y1, x2, y2)), t, pdepth);
 }
 
 StereoBorder::StereoBorder (Rect *r, StereoType t, int pdepth)

@@ -51,5 +51,10 @@
 #endif
 #endif      /* __WINDOWS_H */
 
+
+#ifdef __cplusplus
+template <class T> T * _(const T & tmp) { return const_cast<T *>(&tmp); }
+#endif
+
 #endif
 
